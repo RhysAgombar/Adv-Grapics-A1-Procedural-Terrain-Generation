@@ -1,0 +1,11 @@
+﻿  viewer.cpp
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 2\lab 2\viewer.cpp(201): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 2\lab 2\viewer.cpp(237): warning C4305: 'argument': truncation from 'double' to 'GLfloat'
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 2\lab 2\viewer.cpp(262): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 2\lab 2\viewer.cpp(263): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 2\lab 2\viewer.cpp(264): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 2\lab 2\viewer.cpp(275): warning C4101: 'fragment': unreferenced local variable
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 2\lab 2\viewer.cpp(276): warning C4101: 'vertex': unreferenced local variable
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 2\lab 2\viewer.cpp(273): warning C4101: 'user': unreferenced local variable
+  Lab 2.vcxproj -> C:\Users\100515147\Desktop\Advanced Computer Graphics\Assignments\Assignment 1\Lab 2\x64\Debug\Lab 2.exe
+  Lab 2.vcxproj -> C:\Users\100515147\Desktop\Advanced Computer Graphics\Assignments\Assignment 1\Lab 2\x64\Debug\Lab 2.pdb (Full PDB)
