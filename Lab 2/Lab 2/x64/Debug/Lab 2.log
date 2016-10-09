@@ -1,15 +1,15 @@
 ﻿  viewer.cpp
 c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 2\lab 2\viewer.cpp(88): warning C4244: '=': conversion from 'int' to 'GLfloat', possible loss of data
 c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 2\lab 2\viewer.cpp(89): warning C4244: '=': conversion from 'int' to 'GLfloat', possible loss of data
-c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 2\lab 2\viewer.cpp(118): warning C4101: 'test1': unreferenced local variable
-c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 2\lab 2\viewer.cpp(118): warning C4101: 'test3': unreferenced local variable
-c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 2\lab 2\viewer.cpp(118): warning C4101: 'test2': unreferenced local variable
-c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 2\lab 2\viewer.cpp(157): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 2\lab 2\viewer.cpp(193): warning C4305: 'argument': truncation from 'double' to 'GLfloat'
-c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 2\lab 2\viewer.cpp(218): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 2\lab 2\viewer.cpp(219): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 2\lab 2\viewer.cpp(220): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 2\lab 2\viewer.cpp(229): warning C4101: 'user': unreferenced local variable
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 2\lab 2\viewer.cpp(119): warning C4101: 'test1': unreferenced local variable
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 2\lab 2\viewer.cpp(119): warning C4101: 'test3': unreferenced local variable
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 2\lab 2\viewer.cpp(119): warning C4101: 'test2': unreferenced local variable
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 2\lab 2\viewer.cpp(196): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 2\lab 2\viewer.cpp(232): warning C4305: 'argument': truncation from 'double' to 'GLfloat'
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 2\lab 2\viewer.cpp(257): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 2\lab 2\viewer.cpp(258): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 2\lab 2\viewer.cpp(259): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 2\lab 2\viewer.cpp(268): warning C4101: 'user': unreferenced local variable
 c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 2\lab 2\viewer.cpp(66): warning C4172: returning address of local variable or temporary: n
   Lab 2.vcxproj -> C:\Users\100515147\Desktop\Advanced Computer Graphics\Assignments\Assignment 1\Lab 2\x64\Debug\Lab 2.exe
   Lab 2.vcxproj -> C:\Users\100515147\Desktop\Advanced Computer Graphics\Assignments\Assignment 1\Lab 2\x64\Debug\Lab 2.pdb (Full PDB)

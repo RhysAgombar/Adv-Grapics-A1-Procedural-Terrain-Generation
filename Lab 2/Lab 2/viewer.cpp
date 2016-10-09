@@ -82,26 +82,33 @@ void init() {
 	glGenVertexArrays(1, &objVAO);
 	glBindVertexArray(objVAO);
 
+	/*
+	
+	Everything is hard coded now for a fixed size. Just trying to get the algorithms working first.
+
+	*/
+
 	GLfloat vertices[25][4];
 
 	for (int i = 0; i < vert * horiz; i++) {
-		vertices[i][0] = i % horiz;
-		vertices[i][1] = (int)(i / 5);
-		vertices[i][2] = map[i];
-		vertices[i][3] = 1.0;
+		vertices[i][0] = i % horiz; // count from 0 to horiz size for x value
+		vertices[i][1] = (int)(i / 5); // Only increase y value when we change to a new line
+		vertices[i][2] = map[i]; // z value = map value
+		vertices[i][3] = 1.0; 
 	}
 
 
-	GLfloat normals[38][3];
+	GLfloat fnormals[38][3]; // face normal for every face (38 faces)
+	GLfloat normals[25][3]; // number of vertices (25 vertices)
 
-	GLuint indexes[40];
+	GLuint indexes[40]; 
 
 	int i = 0;
 
 	for (int row = 0; row < vert - 1; row++) {
 		if ((row & 1) == 0) { // even rows
-			for (int col = 0; col<vert; col++) {
-				indexes[i++] = row + col * vert;
+			for (int col = 0; col<vert; col++) { // modified version of the formula from one of the examples you gave me.
+				indexes[i++] = row + col * vert; // It seems to work correctly.
 				indexes[i++] = (row + 1) + col * vert;
 			}
 		}
@@ -117,12 +124,50 @@ void init() {
 
 	GLfloat test1, test2, test3;
 
-	for (int i = 0; i < 38; i++) {
-		arrHolder = findNormal(vertices[indexes[i]], vertices[indexes[i+1]], vertices[indexes[i+2]]);
-		normals[i][0] = arrHolder[0];
-		normals[i][1] = arrHolder[1];
-		normals[i][2] = arrHolder[2];
+	bool toggle = true;
+
+	for (int i = 0; i < 38; i++) { // for every index...
+
+		if (toggle == false) {
+			arrHolder = findNormal(vertices[indexes[i]], vertices[indexes[i + 1]], vertices[indexes[i + 2]]); // find the normal of the face
+			toggle = true;
+		}
+		else {
+			arrHolder = findNormal(vertices[indexes[i]], vertices[indexes[i + 2]], vertices[indexes[i + 1]]); // alternate the direction of the normal to 
+			toggle = false;																					 // compensate for the direction change in the indices formula
+		}
+		
+
+		fnormals[i][0] = arrHolder[0];
+		fnormals[i][1] = arrHolder[1];
+		fnormals[i][2] = arrHolder[2];
 	}
+
+	int count;
+	for (int i = 0; i < 25; i++) { // for every vertex...
+		count = 0;
+
+		normals[i][0] = 0;
+		normals[i][1] = 0; // set vertex normals to 0
+		normals[i][2] = 0;
+
+		for (int j = 0; j < 38; j++) { // for every face...
+			if (indexes[j] == i || indexes[j + 1] == i || indexes[j + 2] == i) {  // if the face contains the vertex
+				count++; // increment the count
+				normals[i][0] += fnormals[j][0]; // add the face normal to the vertex normal 
+				normals[i][1] += fnormals[j][1];
+				normals[i][2] += fnormals[j][2];
+			}
+		}
+
+		normals[i][0] /= count; // divide the normal by the count to average
+		normals[i][1] /= count;
+		normals[i][2] /= count;
+	}
+
+	//normals[1][0] = 1;
+	//normals[1][1] = 1;  // used for debugging to figure out what normals were mapped to where in the image
+	//normals[1][2] = 1;
 
 	triangles = 38;
 
