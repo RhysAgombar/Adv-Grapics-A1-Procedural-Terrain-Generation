@@ -102,43 +102,57 @@ void init() {
 	GLuint indexes[40]; 
 
 	int i = 0;
+	int j = 0;
 
 	for (int row = 0; row < vert - 1; row++) {
 		if ((row & 1) == 0) { // even rows
 			for (int col = 0; col<vert; col++) { // modified version of the formula from one of the examples you gave me.
 				indexes[i++] = row + col * vert; // It seems to work correctly.
-				indexes[i++] = (row + 1) + col * vert;
+				indexes[i++] = (row + 1) + col * vert;		
+				if (i != 2) {
+					findNormal(vertices[indexes[j]], vertices[indexes[j + 1]], vertices[indexes[j + 2]], fnormals[j]);
+					j++;
+					findNormal(vertices[indexes[j]], vertices[indexes[j + 1]], vertices[indexes[j + 2]], fnormals[j]);
+					j++;
+				}
 			}
 		}
 		else { // odd rows
 			for (int col = horiz - 1; col >= 0; col--) {
 				indexes[i++] = (row) + col * horiz;
 				indexes[i++] = (row + 1) + col * horiz;
+				if (i != 2) {
+					findNormal(vertices[indexes[j]], vertices[indexes[j + 2]], vertices[indexes[j + 1]], fnormals[j]);
+					j++;
+					findNormal(vertices[indexes[j]], vertices[indexes[j + 2]], vertices[indexes[j + 1]], fnormals[j]);
+					j++;
+					//findNormal(vertices[indexes[j]], vertices[indexes[j + 2]], vertices[indexes[j + 1]], fnormals[j++]);
+				}
 			}
 		}
 	}
 
-	GLfloat arrHolder[3];
+	
 
 	GLfloat test1, test2, test3;
 
-	bool toggle = false;
+	//bool toggle = false;
 
 	for (int i = 0; i < 38; i++) { // for every index...
 
-		if (toggle == false) {
-			findNormal(vertices[indexes[i]], vertices[indexes[i + 1]], vertices[indexes[i + 2]], arrHolder); // find the normal of the face
-			toggle = true;
-		}
-		else {
-			findNormal(vertices[indexes[i]], vertices[indexes[i + 2]], vertices[indexes[i + 1]], arrHolder); // alternate the direction of the normal to 
-			toggle = false;																					 // compensate for the direction change in the indices formula
-		}
+		//if (toggle == false) {
+			//findNormal(vertices[indexes[i]], vertices[indexes[i + 1]], vertices[indexes[i + 2]], arrHolder); // find the normal of the face
+			//toggle = true;
+		//}
+		//else {
+			//findNormal(vertices[indexes[i]], vertices[indexes[i + 2]], vertices[indexes[i + 1]], arrHolder); // alternate the direction of the normal to 
+			//toggle = false;																					 // compensate for the direction change in the indices formula
+		//}
 		
 
-		fnormals[i][0] = arrHolder[0];
-		fnormals[i][1] = arrHolder[1];
-		fnormals[i][2] = arrHolder[2];
+		//fnormals[i][0] = arrHolder[0];
+		//fnormals[i][1] = arrHolder[1];
+		//fnormals[i][2] = arrHolder[2];
 	}
 
 	int count;
