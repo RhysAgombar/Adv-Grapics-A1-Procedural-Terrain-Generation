@@ -11,7 +11,7 @@ in vec4 pos;
 void main() {
 	vec4 base = vec4(1.0, 0.0, 0.0, 1.0);
 	vec4 white = vec4(1.0, 1.0, 1.0, 1.0);
-	vec3 lPos = vec3(0.5,1.0,6.1);
+	vec3 lPos = vec3(0,0,5);
 	float diffuse;
 	float specular;
 	vec3 N;

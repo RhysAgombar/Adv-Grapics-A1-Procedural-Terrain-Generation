@@ -40,6 +40,10 @@ int vert = 5;
 
 GLfloat* map;
 
+int getIndNum(int width, int height) {
+	return (2 * height) * (width - 1);
+}
+
 void  findNormal(GLfloat* p1, GLfloat* p2, GLfloat* p3, GLfloat(&n)[3]) {
 	GLfloat v[3], w[3];
 
@@ -80,13 +84,18 @@ void init() {
 	glGenVertexArrays(1, &objVAO);
 	glBindVertexArray(objVAO);
 
-	/*
-	
-	Everything is hard coded now for a fixed size. Just trying to get the algorithms working first.
 
-	*/
 
-	GLfloat vertices[25][4];
+	GLfloat** vertices; // [25][4];
+	GLfloat test[25][4];
+
+	int nv = horiz * vert;
+
+	vertices = new GLfloat*[nv];
+
+	for (int i = 0; i < nv; i++) {
+		vertices[i] = new GLfloat[4];
+	}
 
 	for (int i = 0; i < vert * horiz; i++) {
 		vertices[i][0] = i % horiz; // count from 0 to horiz size for x value
@@ -169,11 +178,16 @@ void init() {
 
 	triangles = 38;
 
+	int size = nv * 4;
+
+	std::cout << sizeof(test) << std::endl;
+	std::cout << size * sizeof(GLfloat) << std::endl;
+
 	glGenBuffers(1, &vbuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, vbuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices) + sizeof(normals), NULL, GL_STATIC_DRAW);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
-	glBufferSubData(GL_ARRAY_BUFFER, sizeof(vertices), sizeof(normals), normals);
+	glBufferData(GL_ARRAY_BUFFER, size * sizeof(GLfloat) + sizeof(normals), NULL, GL_STATIC_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, size * sizeof(GLfloat), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, size * sizeof(GLfloat), sizeof(normals), normals);
 
 	glGenBuffers(1, &ibuffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibuffer);
