@@ -88,6 +88,7 @@ void init() {
 
 	GLfloat** vertices; // [25][4];
 	GLfloat test[25][4];
+	GLfloat subVert[81][4];
 
 	int nv = horiz * vert;
 
@@ -104,6 +105,12 @@ void init() {
 		vertices[i][3] = 1.0; 
 	}
 
+	for (int i = 0; i < (vert + (vert - 1)) * (horiz + (horiz - 1)); i++) {
+		subVert[i][0] = i % (horiz + (horiz - 1)); // count from 0 to horiz size for x value
+		subVert[i][1] = (int)(i / (horiz + (horiz - 1))); // Only increase y value when we change to a new line
+		subVert[i][2] = map[i]; // z value = map value
+		subVert[i][3] = 1.0;
+	}
 
 	GLfloat fnormals[38][3]; // face normal for every face (38 faces)
 	GLfloat normals[25][3]; // number of vertices (25 vertices)
