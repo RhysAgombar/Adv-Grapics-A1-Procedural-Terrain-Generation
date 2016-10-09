@@ -40,8 +40,8 @@ int vert = 5;
 
 GLfloat* map;
 
-GLfloat* findNormal(GLfloat* p1, GLfloat* p2, GLfloat* p3) {
-	GLfloat v[3], w[3], n[3];
+void  findNormal(GLfloat* p1, GLfloat* p2, GLfloat* p3, GLfloat(&n)[3]) {
+	GLfloat v[3], w[3];
 
 	v[0] = p2[0] - p1[0];
 	v[1] = p2[1] - p1[1];
@@ -62,8 +62,6 @@ GLfloat* findNormal(GLfloat* p1, GLfloat* p2, GLfloat* p3) {
 		n[1] = n[1] / div;
 		n[2] = n[2] / div;
 	}
-
-	return n;
 }
 
 /*
@@ -120,20 +118,20 @@ void init() {
 		}
 	}
 
-	GLfloat* arrHolder;
+	GLfloat arrHolder[3];
 
 	GLfloat test1, test2, test3;
 
-	bool toggle = true;
+	bool toggle = false;
 
 	for (int i = 0; i < 38; i++) { // for every index...
 
 		if (toggle == false) {
-			arrHolder = findNormal(vertices[indexes[i]], vertices[indexes[i + 1]], vertices[indexes[i + 2]]); // find the normal of the face
+			findNormal(vertices[indexes[i]], vertices[indexes[i + 1]], vertices[indexes[i + 2]], arrHolder); // find the normal of the face
 			toggle = true;
 		}
 		else {
-			arrHolder = findNormal(vertices[indexes[i]], vertices[indexes[i + 2]], vertices[indexes[i + 1]]); // alternate the direction of the normal to 
+			findNormal(vertices[indexes[i]], vertices[indexes[i + 2]], vertices[indexes[i + 1]], arrHolder); // alternate the direction of the normal to 
 			toggle = false;																					 // compensate for the direction change in the indices formula
 		}
 		
