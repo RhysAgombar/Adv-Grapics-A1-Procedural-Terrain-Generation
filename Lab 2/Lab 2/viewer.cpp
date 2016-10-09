@@ -20,6 +20,7 @@
 #include "tiny_obj_loader.h"
 #include <iostream>
 #include <fstream>
+#include <math.h>
 
 
 float eyex, eyey, eyez;
@@ -38,6 +39,32 @@ int horiz = 5;
 int vert = 5;
 
 GLfloat* map;
+
+GLfloat* findNormal(GLfloat* p1, GLfloat* p2, GLfloat* p3) {
+	GLfloat v[3], w[3], n[3];
+
+	v[0] = p2[0] - p1[0];
+	v[1] = p2[1] - p1[1];
+	v[2] = p2[2] - p1[2];
+
+	w[0] = p3[0] - p1[0];
+	w[1] = p3[1] - p1[1];
+	w[2] = p3[2] - p1[2];
+
+	n[0] = (v[1] * w[2]) - (v[2] * w[1]);
+	n[1] = (v[2] * w[0]) - (v[0] * w[2]);
+	n[2] = (v[0] * w[1]) - (v[1] * w[0]);
+
+	GLfloat div = (abs(n[0]) + abs(n[1]) + abs(n[2]));
+
+	if (div != 0) {
+		n[0] = n[0] / div;
+		n[1] = n[1] / div;
+		n[2] = n[2] / div;
+	}
+
+	return n;
+}
 
 /*
 * This version of the init procedure produces the
@@ -65,25 +92,39 @@ void init() {
 	}
 
 
-	GLfloat normals[8][3] = {
-		{ -1.0, -1.0, -1.0 },			//0
-		{ -1.0, -1.0, 1.0 },			//1
-		{ -1.0, 1.0, -1.0 },			//2
-		{ -1.0, 1.0, 1.0 },				//3
-		{ 1.0, -1.0, -1.0 },			//4
-		{ 1.0, -1.0, 1.0 },				//5
-		{ 1.0, 1.0, -1.0 },				//6
-		{ 1.0, 1.0, 1.0 }				//7
-	};
+	GLfloat normals[38][3];
 
-	GLuint indexes[36] = { 0, 1, 3, 0, 2, 3,
-		0, 4, 5, 0, 1, 5,
-		2, 6, 7, 2, 3, 7,
-		0, 4, 6, 0, 2, 6,
-		1, 5, 7, 1, 3, 7,
-		4, 5, 7, 4, 6, 7 };
+	GLuint indexes[40];
 
-	triangles = 12;
+	int i = 0;
+
+	for (int row = 0; row < vert - 1; row++) {
+		if ((row & 1) == 0) { // even rows
+			for (int col = 0; col<vert; col++) {
+				indexes[i++] = row + col * vert;
+				indexes[i++] = (row + 1) + col * vert;
+			}
+		}
+		else { // odd rows
+			for (int col = horiz - 1; col >= 0; col--) {
+				indexes[i++] = (row) + col * horiz;
+				indexes[i++] = (row + 1) + col * horiz;
+			}
+		}
+	}
+
+	GLfloat* arrHolder;
+
+	GLfloat test1, test2, test3;
+
+	for (int i = 0; i < 38; i++) {
+		arrHolder = findNormal(vertices[indexes[i]], vertices[indexes[i+1]], vertices[indexes[i+2]]);
+		normals[i][0] = arrHolder[0];
+		normals[i][1] = arrHolder[1];
+		normals[i][2] = arrHolder[2];
+	}
+
+	triangles = 38;
 
 	glGenBuffers(1, &vbuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, vbuffer);
@@ -152,7 +193,7 @@ void displayFunc(void) {
 	glUniform4f(materialLoc, 0.3, 0.7, 0.7, 150.0);
 
 	glBindVertexArray(objVAO);
-	glDrawElements(GL_TRIANGLES, 3 * triangles, GL_UNSIGNED_INT, NULL);
+	glDrawElements(GL_TRIANGLE_STRIP, 3 * triangles, GL_UNSIGNED_INT, NULL);
 
 	glutSwapBuffers();
 }
@@ -225,12 +266,12 @@ int main(int argc, char **argv) {
 	init();
 
 	eyex = 0.0;
-	eyez = 0.0;
-	eyey = 3.0;
+	eyez = 5.0;
+	eyey = 0.0;
 
 	theta = 1.5;
 	phi = 1.5;
-	r = 3.0;
+	r = 10.0;
 
 	glutMainLoop();
 
