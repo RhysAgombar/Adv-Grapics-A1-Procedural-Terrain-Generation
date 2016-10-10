@@ -86,16 +86,16 @@ void init() {
 
 
 
-	GLfloat** vertices; // [25][4];
+	GLfloat vertices [25][4];
 	GLfloat test[25][4];
 
 	int nv = horiz * vert;
 
-	vertices = new GLfloat*[nv];
+	//vertices = new GLfloat*[nv];
 
-	for (int i = 0; i < nv; i++) {
-		vertices[i] = new GLfloat[4];
-	}
+	//for (int i = 0; i < nv; i++) {
+	//	vertices[i] = new GLfloat[4];
+	//}
 
 	for (int i = 0; i < vert * horiz; i++) {
 		vertices[i][0] = i % horiz; // count from 0 to horiz size for x value
