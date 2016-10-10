@@ -105,10 +105,22 @@ void init() {
 	}
 
 
+	GLfloat * verticesd = new GLfloat[25 * 4];
+	for (int i = 0; i < 25; ++i)
+	{
+		for (int j = 0; j < 4; ++j)
+		{
+			verticesd[i * 4 + j] = vertices[i][j];
+		}
+
+		std::cout << verticesd[i * 4 + 0] << ", " << verticesd[i * 4 + 1] << ", " << verticesd[i * 4 + 2] << std::endl;
+	}
+
+
 	GLfloat fnormals[38][3]; // face normal for every face (38 faces)
 	GLfloat normals[25][3]; // number of vertices (25 vertices)
 
-	GLuint indexes[40];
+	GLuint indexes[40] = { 0, 1, 5, 6, 10, 11, 15, 16, 20};
 
 	int i = 0;
 
@@ -178,16 +190,13 @@ void init() {
 
 	triangles = 38;
 
-	int size = nv * 4;
-
-	std::cout << sizeof(test) << std::endl;
-	std::cout << size * sizeof(GLfloat) << std::endl;
+	int verticesd_size = 4 * 8 * sizeof(*verticesd);
 
 	glGenBuffers(1, &vbuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, vbuffer);
-	glBufferData(GL_ARRAY_BUFFER, size * sizeof(GLfloat) + sizeof(normals), NULL, GL_STATIC_DRAW);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, size * sizeof(GLfloat), vertices);
-	glBufferSubData(GL_ARRAY_BUFFER, size * sizeof(GLfloat), sizeof(normals), normals);
+	glBufferData(GL_ARRAY_BUFFER, verticesd_size + sizeof(normals), NULL, GL_STATIC_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, verticesd_size, verticesd);
+	glBufferSubData(GL_ARRAY_BUFFER, verticesd_size, sizeof(normals), normals);
 
 	glGenBuffers(1, &ibuffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibuffer);
@@ -198,7 +207,7 @@ void init() {
 	glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(vPosition);
 	vNormal = glGetAttribLocation(program, "vNormal");
-	glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, (void*) sizeof(vertices));
+	glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, (void*)(verticesd));
 	glEnableVertexAttribArray(vNormal);
 
 }
