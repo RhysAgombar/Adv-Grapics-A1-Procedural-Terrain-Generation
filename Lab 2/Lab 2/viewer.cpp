@@ -86,29 +86,29 @@ void init() {
 
 
 
-	GLfloat** vertices; // [25][4];
+	GLfloat vertices[25][4];
 	GLfloat test[25][4];
 
 	int nv = horiz * vert;
 
-	vertices = new GLfloat*[nv];
+	//vertices = new GLfloat*[nv];
 
-	for (int i = 0; i < nv; i++) {
-		vertices[i] = new GLfloat[4];
-	}
+	//for (int i = 0; i < nv; i++) {
+	//	vertices[i] = new GLfloat[4];
+	//}
 
 	for (int i = 0; i < vert * horiz; i++) {
 		vertices[i][0] = i % horiz; // count from 0 to horiz size for x value
 		vertices[i][1] = (int)(i / 5); // Only increase y value when we change to a new line
 		vertices[i][2] = map[i]; // z value = map value
-		vertices[i][3] = 1.0; 
+		vertices[i][3] = 1.0;
 	}
 
 
 	GLfloat fnormals[38][3]; // face normal for every face (38 faces)
 	GLfloat normals[25][3]; // number of vertices (25 vertices)
 
-	GLuint indexes[40]; 
+	GLuint indexes[40];
 
 	int i = 0;
 
@@ -116,18 +116,18 @@ void init() {
 		if ((row & 1) == 0) { // even rows
 			for (int col = 0; col<vert; col++) { // modified version of the formula from one of the examples you gave me.
 				indexes[i++] = row + col * vert; // It seems to work correctly.
-				indexes[i++] = (row + 1) + col * vert;		
+				indexes[i++] = (row + 1) + col * vert;
 			}
 		}
 		else { // odd rows
 			for (int col = horiz - 1; col >= 0; col--) {
-				indexes[i++] = (row) + col * horiz;
+				indexes[i++] = (row)+col * horiz;
 				indexes[i++] = (row + 1) + col * horiz;
 			}
 		}
 	}
 
-	
+
 	GLfloat arrHolder[3];
 	GLfloat test1, test2, test3;
 
@@ -143,7 +143,7 @@ void init() {
 			findNormal(vertices[indexes[i]], vertices[indexes[i + 2]], vertices[indexes[i + 1]], arrHolder); // alternate the direction of the normal to 
 			toggle = false;																					 // compensate for the direction change in the indices formula
 		}
-		
+
 
 		fnormals[i][0] = arrHolder[0];
 		fnormals[i][1] = arrHolder[1];
