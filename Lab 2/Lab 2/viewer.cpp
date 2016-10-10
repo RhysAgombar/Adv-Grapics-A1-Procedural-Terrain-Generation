@@ -84,10 +84,8 @@ void init() {
 	glGenVertexArrays(1, &objVAO);
 	glBindVertexArray(objVAO);
 
-
-
 	GLfloat vertices [25][4];
-	GLfloat test[25][4];
+	GLfloat v1[81][4];  // (horiz + (horiz - 1)) * (vert + (vert - 1))
 
 	int nv = horiz * vert;
 
@@ -103,6 +101,32 @@ void init() {
 		vertices[i][2] = map[i]; // z value = map value
 		vertices[i][3] = 1.0; 
 	}
+
+
+	for (int j = 0; j < vert - 1; j++) {
+		for (int i = 0; i < horiz - 1; i++) {
+			GLfloat avg[3];
+
+			avg[0] = (vertices[i + j*horiz][0] + vertices[i + 1 + j*horiz][0] + vertices[i + (j + 1)*horiz][0] + vertices[i + 1 + (j + 1)*horiz][0]) / 4;
+			avg[1] = (vertices[i + j*horiz][1] + vertices[i + 1 + j*horiz][1] + vertices[i + (j + 1)*horiz][1] + vertices[i + 1 + (j + 1)*horiz][1]) / 4;
+			avg[2] = (vertices[i + j*horiz][2] + vertices[i + 1 + j*horiz][2] + vertices[i + (j + 1)*horiz][2] + vertices[i + 1 + (j + 1)*horiz][2]) / 4;
+
+			int pos = (j+1) * (2*horiz) + j*(2*(horiz - 1)) + (2*i);
+
+			v1[pos][0] = avg[0];
+			v1[pos][1] = avg[1];
+			v1[pos][2] = avg[2];
+			v1[pos][3] = 1.0;
+
+			
+		}
+	}
+
+	//v1[pos - horiz * 2][0];  /// FILL IN CORNERS
+
+	//for (int i = 0; i < 5; i++) { // number of passes
+
+	//}
 
 
 	GLfloat fnormals[38][3]; // face normal for every face (38 faces)
@@ -180,7 +204,7 @@ void init() {
 
 	int size = nv * 4;
 
-	std::cout << sizeof(test) << std::endl;
+	//std::cout << sizeof(test) << std::endl;
 	std::cout << size * sizeof(GLfloat) << std::endl;
 
 	glGenBuffers(1, &vbuffer);
