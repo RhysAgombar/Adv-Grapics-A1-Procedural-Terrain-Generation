@@ -19,9 +19,8 @@
 #include "Shaders.h"
 #include "tiny_obj_loader.h"
 #include <iostream>
+#include <random>
 #include <fstream>
-#include <math.h>
-
 
 float eyex, eyey, eyez;
 
@@ -32,19 +31,42 @@ GLuint program;
 
 glm::mat4 projection;
 
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget);
+
+glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirection));
+glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight);
+
+GLfloat lastX = 160; // center of window
+GLfloat lastY = 160;
+GLfloat pitch = 0; // center of window
+GLfloat yaw = 0;
+
 GLuint objVAO;
 int triangles;
+int k = 0;
 
-int horiz = 5;
-int vert = 5;
+std::default_random_engine generator;
+std::normal_distribution<double> distribution(0.0,1.0);
 
-GLfloat* map;
+//int horiz = 5;
+//int vert = 5;
+//int index_count = 0;
+
+float* heights;
+
+int vert = 4;
+int horiz = 4;
+int index_count = (2 * vert) * (horiz - 1);
 
 int getIndNum(int width, int height) {
 	return (2 * height) * (width - 1);
 }
 
-void  findNormal(GLfloat* p1, GLfloat* p2, GLfloat* p3, GLfloat(&n)[3]) {
+void findNormal(GLfloat* p1, GLfloat* p2, GLfloat* p3, GLfloat(&n)[3]) {
 	GLfloat v[3], w[3];
 
 	v[0] = p2[0] - p1[0];
@@ -55,9 +77,9 @@ void  findNormal(GLfloat* p1, GLfloat* p2, GLfloat* p3, GLfloat(&n)[3]) {
 	w[1] = p3[1] - p1[1];
 	w[2] = p3[2] - p1[2];
 
-	n[0] = (v[1] * w[2]) - (v[2] * w[1]);
-	n[1] = (v[2] * w[0]) - (v[0] * w[2]);
-	n[2] = (v[0] * w[1]) - (v[1] * w[0]);
+	n[0] = abs((v[1] * w[2]) - (v[2] * w[1]));
+	n[1] = abs((v[2] * w[0]) - (v[0] * w[2]));
+	n[2] = abs((v[0] * w[1]) - (v[1] * w[0]));
 
 	GLfloat div = (abs(n[0]) + abs(n[1]) + abs(n[2]));
 
@@ -68,162 +90,436 @@ void  findNormal(GLfloat* p1, GLfloat* p2, GLfloat* p3, GLfloat(&n)[3]) {
 	}
 }
 
-/*
-* This version of the init procedure produces the
-* data for drawing a cube.  The vertex and index
-* data are stored in constant arrays which are copied
-* into the buffers.  This code should be familiar
-* from class.
-*/
-void init() {
-	GLuint vbuffer;
-	GLuint ibuffer;
-	GLint vPosition;
-	GLint vNormal;
+void expandMap(GLfloat*(&map)) {
 
-	glGenVertexArrays(1, &objVAO);
-	glBindVertexArray(objVAO);
+	int newHoriz = (horiz + (horiz - 1));
+	int newVert = (vert + (vert - 1));
+	int t = 0;
 
-	GLfloat vertices [25][4];
-	GLfloat v1[81][4];  // (horiz + (horiz - 1)) * (vert + (vert - 1))
-
-	int nv = horiz * vert;
-
-	//vertices = new GLfloat*[nv];
-
-	//for (int i = 0; i < nv; i++) {
-	//	vertices[i] = new GLfloat[4];
-	//}
-
-	for (int i = 0; i < vert * horiz; i++) {
-		vertices[i][0] = i % horiz; // count from 0 to horiz size for x value
-		vertices[i][1] = (int)(i / 5); // Only increase y value when we change to a new line
-		vertices[i][2] = map[i]; // z value = map value
-		vertices[i][3] = 1.0; 
-	}
-
+	GLfloat * v1 = new GLfloat[(horiz + (horiz - 1)) * (vert + (vert - 1)) * 4];
 
 	for (int j = 0; j < vert - 1; j++) {
 		for (int i = 0; i < horiz - 1; i++) {
 			GLfloat avg[3];
+			int pos1 = (i + j*horiz) * 4;
+			int pos2 = (i + 1 + j*horiz) * 4;
+			int pos3 = (i + (j + 1)*horiz) * 4;
+			int pos4 = (i + 1 + (j + 1)*horiz) * 4;
 
-			avg[0] = (vertices[i + j*horiz][0] + vertices[i + 1 + j*horiz][0] + vertices[i + (j + 1)*horiz][0] + vertices[i + 1 + (j + 1)*horiz][0]) / 4;
-			avg[1] = (vertices[i + j*horiz][1] + vertices[i + 1 + j*horiz][1] + vertices[i + (j + 1)*horiz][1] + vertices[i + 1 + (j + 1)*horiz][1]) / 4;
-			avg[2] = (vertices[i + j*horiz][2] + vertices[i + 1 + j*horiz][2] + vertices[i + (j + 1)*horiz][2] + vertices[i + 1 + (j + 1)*horiz][2]) / 4;
+			avg[0] = (map[pos1] + map[pos2] + map[pos3] + map[pos4]) / 4;
+			avg[1] = (map[pos1 + 1] + map[pos2 + 1] + map[pos3 + 1] + map[pos4 + 1]) / 4;
+			avg[2] = (map[pos1 + 2] + map[pos2 + 2] + map[pos3 + 2] + map[pos4 + 2]) / 4;
 
-			int pos = (j+1) * (2*horiz) + j*(2*(horiz - 1)) + (2*i);
+			int vPos = ((j + 1) * (2 * horiz) + j*(2 * (horiz - 1)) + (2 * i)) * 4;
 
-			v1[pos][0] = avg[0];
-			v1[pos][1] = avg[1];
-			v1[pos][2] = avg[2];
-			v1[pos][3] = 1.0;
-
-			
+			v1[vPos] = avg[0];
+			v1[vPos + 1] = avg[1];
+			v1[vPos + 2] = avg[2];
+			v1[vPos + 3] = 1.0;
 		}
 	}
 
-	//v1[pos - horiz * 2][0];  /// FILL IN CORNERS
+	for (int j = 0; j < vert; j++) {
+		for (int i = 0; i < horiz; i++) {
+			int pos = ((j) * (2 * horiz) + (2 * i) + j*(2 * (horiz - 1))) * 4;
+			int mPos = (i + j*horiz) * 4;
+			pos = pos;
 
-	//for (int i = 0; i < 5; i++) { // number of passes
+			v1[pos] = map[mPos];
+			v1[pos + 1] = map[mPos + 1];
+			v1[pos + 2] = map[mPos + 2];
+			v1[pos + 3] = 1.0;
 
+		}
+	}
+
+
+	for (int j = 0; j < newVert; j++) {
+		for (int i = 0; i < newHoriz; i++) {
+
+			int pos = (i + j*newHoriz) * 4;
+			int count = 0;
+
+			if (v1[pos] < (-1e5)) {
+
+				v1[pos] = 0;
+				v1[pos + 1] = 0;
+				v1[pos + 2] = 0;
+				v1[pos + 3] = 1.0;
+
+
+				if ((pos - 1) >= 0) {
+					v1[pos] += v1[pos - 4];
+					v1[pos + 1] += v1[pos - 3];
+					v1[pos + 2] += v1[pos - 2];
+					count++;
+				}
+
+				if ((pos + 6) < (newHoriz * 4)) {
+					v1[pos] += v1[pos + 4];
+					v1[pos + 1] += v1[pos + 5];
+					v1[pos + 2] += v1[pos + 6];
+					count++;
+				}
+
+				if (j - 1 >= 0) {
+					v1[pos] += v1[pos - newHoriz*4];
+					v1[pos + 1] += v1[(pos - newHoriz*4) + 1];
+					v1[pos + 2] += v1[(pos - newHoriz*4) + 2];
+					count++;
+				}
+
+				if (j + 1 < newHoriz) {
+					v1[pos] += v1[pos + newHoriz*4];
+					v1[pos + 1] += v1[pos + newHoriz*4 + 1];
+					v1[pos + 2] += v1[pos + newHoriz*4 + 2];
+					count++;
+				}
+
+				v1[pos] /= count;
+				v1[pos+1] /= count;
+				
+				double r = distribution(generator);
+
+				v1[pos+2] /= count;
+				v1[pos + 2] += (r * 0.1);
+
+			}
+		}
+	}
+
+	horiz = newHoriz;
+	vert = newVert;
+
+	index_count = getIndNum(horiz, vert);
+
+	map = v1;
+
+}
+
+void init() {
+	//GLuint vbuffer;
+	//GLuint ibuffer;
+	//GLint vPosition;
+	//GLint vNormal;
+	//
+	//glGenVertexArrays(1, &objVAO);
+	//glBindVertexArray(objVAO);
+	//
+	//index_count = getIndNum(horiz,vert);
+	//
+	//GLfloat * vertices = new GLfloat[4 * horiz*vert];
+	//
+	//float heights[] = { 1, 1, 1, 1, 1,
+	//	1, 1, 2, 1, 1,
+	//	1, 2, 5, 2, 1,
+	//	1, 1, 2, 1, 1,
+	//	1, 1, 1, 1, 1 };
+	//
+	//int vi = 0;
+	//int ni = 0;
+	//int ni2 = 0;
+	//
+	//for (int i = 0; i < vert * horiz; i++) {
+	//	vertices[vi++] = i % horiz; // count from 0 to horiz size for x value
+	//	vertices[vi++] = (int)(i / 5); // Only increase y value when we change to a new line
+	//	vertices[vi++] = heights[i]; // z value = map value
+	//	vertices[vi++] = 1.0;
 	//}
-
-
-	GLfloat fnormals[38][3]; // face normal for every face (38 faces)
-	GLfloat normals[25][3]; // number of vertices (25 vertices)
-
-	GLuint indexes[40]; 
-
-	int i = 0;
-
-	for (int row = 0; row < vert - 1; row++) {
-		if ((row & 1) == 0) { // even rows
-			for (int col = 0; col<vert; col++) { // modified version of the formula from one of the examples you gave me.
-				indexes[i++] = row + col * vert; // It seems to work correctly.
-				indexes[i++] = (row + 1) + col * vert;		
-			}
-		}
-		else { // odd rows
-			for (int col = horiz - 1; col >= 0; col--) {
-				indexes[i++] = (row) + col * horiz;
-				indexes[i++] = (row + 1) + col * horiz;
-			}
-		}
-	}
-
-	
-	GLfloat arrHolder[3];
-	GLfloat test1, test2, test3;
-
-	bool toggle = false;
-
-	for (int i = 0; i < 38; i++) { // for every index...
-
-		if (toggle == false) {
-			findNormal(vertices[indexes[i]], vertices[indexes[i + 1]], vertices[indexes[i + 2]], arrHolder); // find the normal of the face
-			toggle = true;
-		}
-		else {
-			findNormal(vertices[indexes[i]], vertices[indexes[i + 2]], vertices[indexes[i + 1]], arrHolder); // alternate the direction of the normal to 
-			toggle = false;																					 // compensate for the direction change in the indices formula
-		}
-		
-
-		fnormals[i][0] = arrHolder[0];
-		fnormals[i][1] = arrHolder[1];
-		fnormals[i][2] = arrHolder[2];
-	}
-
-	//int count;
-	//for (int i = 0; i < 25; i++) { // for every vertex...
-	//	count = 0;
-
-	//	normals[i][0] = 0;
-	//	normals[i][1] = 0; // set vertex normals to 0
-	//	normals[i][2] = 0;
-
-	//	for (int j = 0; j < 38; j++) { // for every face...
-	//		if (indexes[j] == i || indexes[j + 1] == i || indexes[j + 2] == i) {  // if the face contains the vertex
-	//			count++; // increment the count
-	//			normals[i][0] += fnormals[j][0]; // add the face normal to the vertex normal 
-	//			normals[i][1] += fnormals[j][1];
-	//			normals[i][2] += fnormals[j][2];
+	//
+	//int i = 0;
+	//
+	////expandMap(vertices);
+	//
+	//int t = 0;
+	//std::cout << " ----------------------- " << std::endl;
+	//for (int i = 0; i < vert; i++) {
+	//	for (int j = 0; j < horiz; j++) {
+	//		std::cout << "{ " << vertices[t] << ", " << vertices[t + 1] << ", " << vertices[t + 2] << ", " << vertices[t + 3] << " }" << std::endl;
+	//		t = t + 4;
+	//	}
+	//	std::cout << " //// " << std::endl;
+	//}
+	//std::cout << " ----------------------- " << std::endl;
+	//
+	//GLfloat * fnormals = new GLfloat[index_count - 2];
+	//GLfloat * normals = new GLfloat[3 * horiz*vert];
+	//GLuint * indices = new GLuint[index_count];
+	//
+	//
+	//
+	//for (int row = 0; row < vert - 1; row++) {
+	//	if ((row & 1) == 0) { // even rows
+	//		for (int col = 0; col<vert; col++) { // modified version of the formula from one of the examples you gave me.
+	//			indices[i++] = row + col * vert; // It seems to work correctly.
+	//			indices[i++] = (row + 1) + col * vert;
 	//		}
 	//	}
-
-	//	normals[i][0] /= count; // divide the normal by the count to average
-	//	normals[i][1] /= count;
-	//	normals[i][2] /= count;
+	//	else { // odd rows
+	//		for (int col = horiz - 1; col >= 0; col--) {
+	//			indices[i++] = (row)+col * horiz;
+	//			indices[i++] = (row + 1) + col * horiz;
+	//		}
+	//	}
 	//}
+	//
+	//GLfloat arrHolder[3];
+	//bool toggle = false;
+	//
+	//for (int i = 0; i < index_count - 2; i++) { // for every face...
+	//	int pos1, pos2, pos3;
+	//
+	//	pos1 = indices[i] * 4;
+	//	pos2 = indices[i+1] * 4;
+	//	pos3 = indices[i+2] * 4;
+	//
+	//	GLfloat p1[3] = { vertices[pos1] , vertices[pos1 + 1] , vertices[pos1 + 2] };
+	//	GLfloat p2[3] = { vertices[pos2] , vertices[pos2 + 1] , vertices[pos2 + 2] };
+	//	GLfloat p3[3] = { vertices[pos3] , vertices[pos3 + 1] , vertices[pos3 + 2] };
+	//
+	//
+	//	if (toggle == false) {
+	//		findNormal(p1, p2, p3, arrHolder); // find the normal of the face
+	//		toggle = true;
+	//	}
+	//	else {
+	//		findNormal(p1, p3, p2, arrHolder); // alternate the direction of the normal to 
+	//		toggle = false;					   // compensate for the direction change in the indices formula
+	//	}
+	//
+	//
+	//	fnormals[ni++] = arrHolder[0];
+	//	fnormals[ni++] = arrHolder[1];
+	//	fnormals[ni++] = arrHolder[2];
+	//}
+	//
+	//
+	//
+	//
+	//
+	//
+	////int count;
+	////int pos = 0;
+	////int pos1 = 0;
+	////for (int i = 0; i < horiz*vert; i++) { // for every vertex...
+	////	count = 0;
+	////
+	////	normals[pos] = 0;
+	////	normals[pos+1] = 0; // set vertex normals to 0
+	////	normals[pos+2] = 0;
+	////
+	////	for (int j = 0; j < index_count - 2; j++) { // for every face...
+	////		if (indices[j] == i || indices[j + 1] == i || indices[j + 2] == i) {  // if the face contains the vertex
+	////			count++; // increment the count
+	////			normals[pos] += fnormals[pos1++]; // add the face normal to the vertex normal 
+	////			normals[pos + 1] += fnormals[pos1++];
+	////			normals[pos + 2] += fnormals[pos1++];
+	////		}
+	////	}
+	////
+	////	GLfloat test = normals[pos];
+	////
+	////	normals[pos++] /= count; // divide the normal by the count to average
+	////	test = normals[pos];
+	////	normals[pos++] /= count;
+	////	test = normals[pos];
+	////	normals[pos++] /= count;
+	////}
+	//
+	//
+	//int v_size = horiz * vert * 4 * sizeof(*vertices);
+	//int n_size = 3 * (index_count - 2);
+	//
+	//for (int i = 0; i < 3 * (index_count - 2); i += 3) {
+	//	std::cout << fnormals[i] << ", " << fnormals[i + 1] << ", " << fnormals[i + 2] << std::endl;
+	//}
+	//
+	//int i_size = index_count * sizeof(*indices);
+	//
+	//glGenBuffers(1, &vbuffer);
+	//glBindBuffer(GL_ARRAY_BUFFER, vbuffer);
+	//glBufferData(GL_ARRAY_BUFFER, v_size + n_size, NULL, GL_STATIC_DRAW);
+	//glBufferSubData(GL_ARRAY_BUFFER, 0, v_size, vertices);
+	//glBufferSubData(GL_ARRAY_BUFFER, v_size, n_size, normals);
+	//
+	//glGenBuffers(1, &ibuffer);
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibuffer);
+	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, i_size, indices, GL_STATIC_DRAW);
+	//
+	//glUseProgram(program);
+	//vPosition = glGetAttribLocation(program, "vPosition");
+	//glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, 0);
+	//glEnableVertexAttribArray(vPosition);
+	//vNormal = glGetAttribLocation(program, "vNormal");
+	//glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, (void*)v_size);
+	//glEnableVertexAttribArray(vNormal);
 
-	//normals[1][0] = 1;
-	//normals[1][1] = 1;  // used for debugging to figure out what normals were mapped to where in the image
-	//normals[1][2] = 1;
+GLuint vbuffer;
+GLuint ibuffer;
+GLint vPosition;
+GLint vNormal;
 
-	triangles = 38;
+glGenVertexArrays(1, &objVAO);
+glBindVertexArray(objVAO);
 
-	int size = nv * 4;
+GLfloat * vertices = new GLfloat[4 * vert*horiz];
 
-	//std::cout << sizeof(test) << std::endl;
-	std::cout << size * sizeof(GLfloat) << std::endl;
+//float heights[] = { 1, 10, 1, 10, 1,
+//1, 20, 50, 10, 1,
+//20, 20, 30, 20, 1,
+//10, 40, 70, 50, 1,
+//1, 1, 10, 1, 1 };
 
-	glGenBuffers(1, &vbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vbuffer);
-	glBufferData(GL_ARRAY_BUFFER, size * sizeof(GLfloat) + sizeof(fnormals), NULL, GL_STATIC_DRAW);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, size * sizeof(GLfloat), vertices);
-	glBufferSubData(GL_ARRAY_BUFFER, size * sizeof(GLfloat), sizeof(fnormals), fnormals);
 
-	glGenBuffers(1, &ibuffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibuffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indexes), indexes, GL_STATIC_DRAW);
+int vi = 0;
+int ni = 0;
+int ii = 0;
+int hi = 0;
 
-	glUseProgram(program);
-	vPosition = glGetAttribLocation(program, "vPosition");
-	glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(vPosition);
-	vNormal = glGetAttribLocation(program, "vNormal");
-	glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, (void*) sizeof(vertices));
-	glEnableVertexAttribArray(vNormal);
+for (int i = 0; i < horiz * vert; i++) {
+	vertices[vi++] = (i % horiz) * 100; // count from 0 to horiz size for x value
+	vertices[vi++] = ((int)(i / 5)) * 100; // Only increase y value when we change to a new line
+	vertices[vi++] = heights[i]; // z value = map value
+	vertices[vi++] = 1.0;
+}
+
+//for (int i = 0; i < 4; i++) {
+//	expandMap(vertices);
+//}
+
+//GLfloat * fnormals = new GLfloat[(index_count - 2) * 3];
+
+
+GLfloat * norms = new GLfloat[3 * vert*horiz];
+GLuint * indices = new GLuint[index_count];
+
+int i = 0;
+for (int row = 0; row < vert - 1; row++) {
+	if ((row & 1) == 0) { // even rows
+		for (int col = 0; col<vert; col++) { // modified version of the formula from one of the examples you gave me.
+			indices[i++] = row + col * vert; // It seems to work correctly.
+			indices[i++] = (row + 1) + col * vert;
+		}
+	}
+	else { // odd rows
+		for (int col = horiz - 1; col >= 0; col--) {
+			indices[i++] = (row)+col * horiz;
+			indices[i++] = (row + 1) + col * horiz;
+		}
+	}
+}
+//
+//GLfloat arrHolder[3];
+//bool toggle = false;
+//
+//for (int i = 0; i < getIndNum(horiz,vert); i++) {
+//	std::cout << indices[i] << std::endl;
+//}
+//
+//GLfloat arrHolder[3];
+//bool toggle = false;
+//
+//for (int i = 0; i < index_count - 2; i++) { // for every face...
+//	int pos1, pos2, pos3;
+//
+//	pos1 = indices[i] * 4;
+//	pos2 = indices[i+1] * 4;
+//	pos3 = indices[i+2] * 4;
+//
+//	GLfloat p1[3] = { vertices[pos1] , vertices[pos1 + 1] , vertices[pos1 + 2] };
+//	GLfloat p2[3] = { vertices[pos2] , vertices[pos2 + 1] , vertices[pos2 + 2] };
+//	GLfloat p3[3] = { vertices[pos3] , vertices[pos3 + 1] , vertices[pos3 + 2] };
+//
+//
+//	if (toggle == false) {
+//		findNormal(p1, p2, p3, arrHolder); // find the normal of the face
+//		toggle = true;
+//	}
+//	else {
+//		findNormal(p1, p3, p2, arrHolder); // alternate the direction of the normal to 
+//		toggle = false;					   // compensate for the direction change in the indices formula
+//	}
+//
+//
+//	fnormals[ni++] = arrHolder[0];
+//	fnormals[ni++] = arrHolder[1];
+//	fnormals[ni++] = arrHolder[2];
+//}
+
+
+//int count = 0;
+//for (int i = 0; i < (index_count - 2); i++) {
+//	std::cout << i << " - {" << fnormals[count++] << ", " << fnormals[count++] << ", " << fnormals[count++] << "}" << std::endl;
+//}
+
+
+////int count;
+//int pos = 0;
+//int pos1 = 0;
+//
+//GLfloat * normals = new GLfloat[3 * vert*horiz];
+//
+//for (int i = 0; i < horiz*vert; i++) { // for every vertex...
+//	count = 0;
+//
+//	normals[pos] = 0;
+//	normals[pos+1] = 0; // set vertex normals to 0
+//	normals[pos+2] = 0;
+//
+//	for (int j = 0; j < index_count - 2; j++) { // for every face...
+//		if (indices[j] == i || indices[j + 1] == i || indices[j + 2] == i) {  // if the face contains the vertex
+//			count++; // increment the count
+//			normals[pos] += fnormals[pos1++]; // add the face normal to the vertex normal 
+//			normals[pos + 1] += fnormals[pos1++];
+//			normals[pos + 2] += fnormals[pos1++];
+//		}
+//	}
+//
+//	GLfloat test = normals[pos];
+//
+//	normals[pos++] /= count; // divide the normal by the count to average
+//	test = normals[pos];
+//	normals[pos++] /= count;
+//	test = normals[pos];
+//	normals[pos++] /= count;
+//}
+
+ni = 0;
+
+for (int i = 0; i < vert; ++i)
+{
+	for (int j = 0; j < horiz; ++j)
+	{
+
+		norms[ni++] = 0.0;
+		norms[ni++] = 1.0;
+		norms[ni++] = 0.0;
+
+	}
+}
+
+int v_size = vert * horiz * 4 * sizeof(*vertices);
+int n_size = (index_count - 2) * 3 * sizeof(*fnormals);
+int i_size = index_count * sizeof(*indices);
+
+glGenBuffers(1, &vbuffer);
+glBindBuffer(GL_ARRAY_BUFFER, vbuffer);
+glBufferData(GL_ARRAY_BUFFER, v_size + n_size, NULL, GL_STATIC_DRAW);
+glBufferSubData(GL_ARRAY_BUFFER, 0, v_size, vertices);
+glBufferSubData(GL_ARRAY_BUFFER, v_size, n_size, fnormals);
+
+glGenBuffers(1, &ibuffer);
+glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibuffer);
+glBufferData(GL_ELEMENT_ARRAY_BUFFER, i_size, indices, GL_STATIC_DRAW);
+
+glUseProgram(program);
+vPosition = glGetAttribLocation(program, "vPosition");
+glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, 0);
+glEnableVertexAttribArray(vPosition);
+vNormal = glGetAttribLocation(program, "vNormal");
+glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, (void*)v_size);
+glEnableVertexAttribArray(vNormal);
+
 
 }
 
@@ -239,7 +535,7 @@ void changeSize(int w, int h) {
 
 	glViewport(0, 0, w, h);
 
-	projection = glm::perspective(45.0f, ratio, 1.0f, 100.0f);
+	projection = glm::perspective(45.0f, ratio, 1.0f, 5000.0f);
 
 }
 
@@ -248,16 +544,19 @@ void displayFunc(void) {
 	int viewLoc;
 	int projLoc;
 	int colourLoc;
-	int eyeLoc;
+	int camLoc;
 	int lightLoc;
 	int materialLoc;
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(program);
 
-	view = glm::lookAt(glm::vec3(eyex, eyey, eyez),
-		glm::vec3(0.0f, 0.0f, 0.0f),
-		glm::vec3(0.0f, 0.0f, 1.0f));
+
+	view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+
+	GLfloat radius = 10.0f;
+	GLfloat camX = sin(k) * radius;
+	GLfloat camZ = cos(k++) * radius;
 
 	viewLoc = glGetUniformLocation(program, "modelView");
 	glUniformMatrix4fv(viewLoc, 1, 0, glm::value_ptr(view));
@@ -266,66 +565,86 @@ void displayFunc(void) {
 
 	colourLoc = glGetUniformLocation(program, "colour");
 	glUniform4f(colourLoc, 1.0, 0.0, 0.0, 1.0);
-	eyeLoc = glGetUniformLocation(program, "Eye");
-	glUniform3f(eyeLoc, eyex, eyey, eyez);
+	camLoc = glGetUniformLocation(program, "Eye");
+	glUniform3f(camLoc, cameraPos.x, 0.0f, cameraPos.z);
 	lightLoc = glGetUniformLocation(program, "light");
 	glUniform3f(lightLoc, 1.0, 1.0, 1.0);
 	materialLoc = glGetUniformLocation(program, "material");
 	glUniform4f(materialLoc, 0.3, 0.7, 0.7, 150.0);
 
 	glBindVertexArray(objVAO);
-	glDrawElements(GL_TRIANGLE_STRIP, 3 * triangles, GL_UNSIGNED_INT, NULL);
+	glDrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, NULL);
 
 	glutSwapBuffers();
 }
 
 void keyboardFunc(unsigned char key, int x, int y) {
 
+	GLfloat cameraSpeed = 10.5f;
+
 	switch (key) {
 	case 'a':
-		phi -= 0.1;
+		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
 		break;
 	case 'd':
-		phi += 0.1;
+		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
 		break;
 	case 'w':
-		theta += 0.1;
+		cameraPos += cameraSpeed * cameraFront;
 		break;
 	case 's':
-		theta -= 0.1;
+		cameraPos -= cameraSpeed * cameraFront;
 		break;
 	}
 
-	eyex = r*sin(theta)*cos(phi);
-	eyey = r*sin(theta)*sin(phi);
-	eyez = r*cos(theta);
-
 	glutPostRedisplay();
+
+}
+
+void mouseFunc(int button, int state, int x, int y) {
+
+	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+		lastX = x;
+		lastY = y;
+	}
+	else if (button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
+
+		GLfloat xoffset = x - lastX;
+		GLfloat yoffset = lastY - y;
+		lastX = x;
+		lastY = y;
+
+		GLfloat sensitivity = 0.15;
+		xoffset *= sensitivity;
+		yoffset *= sensitivity;
+
+		yaw += xoffset;
+		pitch += yoffset;
+
+		if (pitch > 89.0f)
+			pitch = 89.0f;
+		if (pitch < -89.0f)
+			pitch = -89.0f;
+
+		glm::vec3 front;
+		front.x = -sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+		front.y = -sin(glm::radians(pitch));
+		front.z = -cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+		cameraFront = glm::normalize(front);
+	}
+
 
 }
 
 int main(int argc, char **argv) {
 	int fs;
 	int vs;
-	int user;
-
-	std::string in;
-	std::fstream file("heightmap.txt");
-
-	map = new GLfloat[25];//[horiz*vert];
-
-	for (int i = 0; i < horiz * vert; i++) {
-		file >> map[i];
-	}
-
-	file.close();
-
 
 	glutInit(&argc, argv);
 
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
 	glutInitWindowPosition(100, 100);
-	glutInitWindowSize(320, 320);
+	glutInitWindowSize(700, 700);
 	glutCreateWindow("Viewer");
 	GLenum error = glewInit();
 	if (error != GLEW_OK) {
@@ -336,23 +655,30 @@ int main(int argc, char **argv) {
 	glutDisplayFunc(displayFunc);
 	glutReshapeFunc(changeSize);
 	glutKeyboardFunc(keyboardFunc);
+	glutMouseFunc(mouseFunc);
 
 	glEnable(GL_DEPTH_TEST);
 	glClearColor(1.0, 1.0, 1.0, 1.0);
+
+
+
+	std::string in;
+	std::fstream file("heightmap.txt");
+
+	heights = new GLfloat[horiz*vert];
+
+	for (int i = 0; i < horiz * vert; i++) {
+		file >> heights[i];
+	}
+
+	file.close();
+
 
 	vs = buildShader(GL_VERTEX_SHADER, "lab2.vs");
 	fs = buildShader(GL_FRAGMENT_SHADER, "lab2.fs");
 	program = buildProgram(vs, fs, 0);
 	dumpProgram(program, "Lab 2 shader program");
 	init();
-
-	eyex = 0.0;
-	eyez = 5.0;
-	eyey = 0.0;
-
-	theta = 1.5;
-	phi = 1.5;
-	r = 10.0;
 
 	glutMainLoop();
 

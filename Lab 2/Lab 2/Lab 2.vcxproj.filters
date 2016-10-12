@@ -21,6 +21,9 @@
     <ClCompile Include="Shaders.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="tiny_obj_loader.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Shaders.h">
@@ -31,11 +34,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="lab2.fs">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="lab2.vs">
-      <Filter>Source Files</Filter>
-    </None>
+    <None Include="lab2.fs" />
+    <None Include="lab2.vs" />
   </ItemGroup>
 </Project>

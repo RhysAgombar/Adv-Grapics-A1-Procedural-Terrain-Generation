@@ -8,12 +8,45 @@ uniform mat4 modelView;
 uniform mat4 projection;
 in vec4 vPosition;
 in vec3 vNormal;
-out vec3 normal;
-out vec4 pos;
+
+uniform vec4 colour;
+uniform vec3 Eye;
+uniform vec3 light;
+uniform vec4 material;
+
+out vec4 colourO;
 
 void main() {
+	vec3 normal;
+	vec3 position;
 
 	gl_Position = projection * modelView * vPosition;
-	normal = (modelView * vec4(vNormal,1.0)).xyz;
-	pos = gl_Position;
+	position = vPosition.xyz;
+	normal = vNormal;
+
+	vec4 white = vec4(1.0,1.0,1.0,1.0);
+	float diffuse;
+	vec3 L = normalize(light);
+	vec3 R = normalize(reflect(-L,normal));
+	vec3 N;
+	vec3 H = normalize(L + (Eye - position));
+	float specular;
+
+	//if (position.x < 1){
+		vec4 c = vec4(0.941,0.902,0.549,1.0);
+	//} else {
+	//	c = colour;
+	//}
+
+	N = normalize(normal);
+	diffuse = dot(N,L);
+	if (diffuse < 0.0){
+		diffuse = 0.0;
+		specular = 0.0;
+	} else {
+		specular =  pow(max(0.0, dot(N,R)),material.w);
+	}
+
+	colourO = min(material.x * c + material.y * diffuse * c + material.z * white * specular, vec4(1.0));
+
 }
