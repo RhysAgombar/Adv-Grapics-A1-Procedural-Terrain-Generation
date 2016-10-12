@@ -87,11 +87,7 @@ void init() {
 	GLfloat vertices [25][4];
 	GLfloat v1[81][4];  // (horiz + (horiz - 1)) * (vert + (vert - 1))
 
-	int newHoriz = (horiz + (horiz - 1));
-	int newVert = (vert + (vert - 1));
-
 	int nv = horiz * vert;
-	int nv1 = newHoriz * newVert;
 
 	//vertices = new GLfloat*[nv];
 
@@ -120,80 +116,23 @@ void init() {
 			v1[pos][0] = avg[0];
 			v1[pos][1] = avg[1];
 			v1[pos][2] = avg[2];
-			v1[pos][3] = 1.0;			
-		}
-	}
-
-	for (int j = 0; j < vert; j++) {
-		for (int i = 0; i < horiz; i++) {
-			int pos = (j) * (2 * horiz) + (2 * i) + j*(2 * (horiz - 1));
-			pos = pos;
-
-			v1[pos][0] = vertices[i + j*horiz][0];
-			v1[pos][1] = vertices[i + j*horiz][1];
-			v1[pos][2] = vertices[i + j*horiz][2];
 			v1[pos][3] = 1.0;
 
+			
 		}
 	}
 
-	for (int j = 0; j < newVert; j++) {
-		for (int i = 0; i < newHoriz; i++) {
+	//v1[pos - horiz * 2][0];  /// FILL IN CORNERS
 
-			int pos = i + j*newHoriz;
-			int count = 0;
+	//for (int i = 0; i < 5; i++) { // number of passes
 
-			if (v1[pos][0] < (-1e5)) {
-				
-				v1[pos][0] = 0;
-				v1[pos][1] = 0;
-				v1[pos][2] = 0;
-				v1[pos][3] = 1.0;
-
-				if (i - 1 >= 0) {
-					v1[pos][0] += v1[pos - 1][0];
-					v1[pos][1] += v1[pos - 1][1];
-					v1[pos][2] += v1[pos - 1][2];
-					count++;
-				}
-
-				if (i + 1 < newHoriz) {
-					v1[pos][0] += v1[pos + 1][0];
-					v1[pos][1] += v1[pos + 1][1];
-					v1[pos][2] += v1[pos + 1][2];
-					count++;
-				}
-				
-				if (j - 1 >= 0) {
-					v1[pos][0] += v1[pos - newHoriz][0];
-					v1[pos][1] += v1[pos - newHoriz][1];
-					v1[pos][2] += v1[pos - newHoriz][2];
-					count++;
-				}
-
-				if (j + 1 < newHoriz) {
-					v1[pos][0] += v1[pos + newHoriz][0];
-					v1[pos][1] += v1[pos + newHoriz][1];
-					v1[pos][2] += v1[pos + newHoriz][2];
-					count++;
-				}
-
-				v1[pos][0] /= count;
-				v1[pos][1] /= count;
-				v1[pos][2] /= count;
-
-			}
-		}
-	}
+	//}
 
 
 	GLfloat fnormals[38][3]; // face normal for every face (38 faces)
 	GLfloat normals[25][3]; // number of vertices (25 vertices)
 
 	GLuint indexes[40]; 
-
-
-	GLuint nIndexes[144];
 
 	int i = 0;
 
@@ -208,21 +147,6 @@ void init() {
 			for (int col = horiz - 1; col >= 0; col--) {
 				indexes[i++] = (row) + col * horiz;
 				indexes[i++] = (row + 1) + col * horiz;
-			}
-		}
-	}
-
-	for (int row = 0; row < newVert - 1; row++) {
-		if ((row & 1) == 0) { // even rows
-			for (int col = 0; col<newVert; col++) { // modified version of the formula from one of the examples you gave me.
-				nIndexes[i++] = row + col * newVert; // It seems to work correctly.
-				nIndexes[i++] = (row + 1) + col * newVert;
-			}
-		}
-		else { // odd rows
-			for (int col = newHoriz - 1; col >= 0; col--) {
-				nIndexes[i++] = (row)+col * newHoriz;
-				nIndexes[i++] = (row + 1) + col * newHoriz;
 			}
 		}
 	}
@@ -250,27 +174,27 @@ void init() {
 		fnormals[i][2] = arrHolder[2];
 	}
 
-	int count;
-	for (int i = 0; i < 25; i++) { // for every vertex...
-		count = 0;
+	//int count;
+	//for (int i = 0; i < 25; i++) { // for every vertex...
+	//	count = 0;
 
-		normals[i][0] = 0;
-		normals[i][1] = 0; // set vertex normals to 0
-		normals[i][2] = 0;
+	//	normals[i][0] = 0;
+	//	normals[i][1] = 0; // set vertex normals to 0
+	//	normals[i][2] = 0;
 
-		for (int j = 0; j < 38; j++) { // for every face...
-			if (indexes[j] == i || indexes[j + 1] == i || indexes[j + 2] == i) {  // if the face contains the vertex
-				count++; // increment the count
-				normals[i][0] += fnormals[j][0]; // add the face normal to the vertex normal 
-				normals[i][1] += fnormals[j][1];
-				normals[i][2] += fnormals[j][2];
-			}
-		}
+	//	for (int j = 0; j < 38; j++) { // for every face...
+	//		if (indexes[j] == i || indexes[j + 1] == i || indexes[j + 2] == i) {  // if the face contains the vertex
+	//			count++; // increment the count
+	//			normals[i][0] += fnormals[j][0]; // add the face normal to the vertex normal 
+	//			normals[i][1] += fnormals[j][1];
+	//			normals[i][2] += fnormals[j][2];
+	//		}
+	//	}
 
-		normals[i][0] /= count; // divide the normal by the count to average
-		normals[i][1] /= count;
-		normals[i][2] /= count;
-	}
+	//	normals[i][0] /= count; // divide the normal by the count to average
+	//	normals[i][1] /= count;
+	//	normals[i][2] /= count;
+	//}
 
 	//normals[1][0] = 1;
 	//normals[1][1] = 1;  // used for debugging to figure out what normals were mapped to where in the image
@@ -279,27 +203,26 @@ void init() {
 	triangles = 38;
 
 	int size = nv * 4;
-	int size1 = nv1 * 4;
 
 	//std::cout << sizeof(test) << std::endl;
 	std::cout << size * sizeof(GLfloat) << std::endl;
 
 	glGenBuffers(1, &vbuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, vbuffer);
-	glBufferData(GL_ARRAY_BUFFER, size1 * sizeof(GLfloat) + sizeof(normals), NULL, GL_STATIC_DRAW);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, size1 * sizeof(GLfloat), v1);
-	glBufferSubData(GL_ARRAY_BUFFER, size1 * sizeof(GLfloat), sizeof(normals), normals);
+	glBufferData(GL_ARRAY_BUFFER, size * sizeof(GLfloat) + sizeof(fnormals), NULL, GL_STATIC_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, size * sizeof(GLfloat), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, size * sizeof(GLfloat), sizeof(fnormals), fnormals);
 
 	glGenBuffers(1, &ibuffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibuffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(nIndexes), nIndexes, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indexes), indexes, GL_STATIC_DRAW);
 
 	glUseProgram(program);
 	vPosition = glGetAttribLocation(program, "vPosition");
 	glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(vPosition);
 	vNormal = glGetAttribLocation(program, "vNormal");
-	glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, (void*) sizeof(v1));
+	glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, (void*) sizeof(vertices));
 	glEnableVertexAttribArray(vNormal);
 
 }
