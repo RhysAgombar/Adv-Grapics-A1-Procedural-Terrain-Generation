@@ -1,0 +1,44 @@
+﻿  viewer.cpp
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 4\lab 2\lab 2\viewer.cpp(197): warning C4244: '+=': conversion from 'double' to 'GLfloat', possible loss of data
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 4\lab 2\lab 2\viewer.cpp(201): warning C4244: '+=': conversion from 'double' to 'GLfloat', possible loss of data
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 4\lab 2\lab 2\viewer.cpp(239): warning C4244: '=': conversion from 'int' to 'GLfloat', possible loss of data
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 4\lab 2\lab 2\viewer.cpp(241): warning C4244: '=': conversion from 'int' to 'GLfloat', possible loss of data
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 4\lab 2\lab 2\viewer.cpp(382): warning C4312: 'type cast': conversion from 'int' to 'void *' of greater size
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 4\lab 2\lab 2\viewer.cpp(395): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 4\lab 2\lab 2\viewer.cpp(423): warning C4305: 'argument': truncation from 'double' to 'GLfloat'
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 4\lab 2\lab 2\viewer.cpp(429): warning C4305: 'argument': truncation from 'double' to 'GLfloat'
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 4\lab 2\lab 2\viewer.cpp(463): warning C4244: '=': conversion from 'int' to 'GLfloat', possible loss of data
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 4\lab 2\lab 2\viewer.cpp(464): warning C4244: '=': conversion from 'int' to 'GLfloat', possible loss of data
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 4\lab 2\lab 2\viewer.cpp(470): warning C4244: '=': conversion from 'int' to 'GLfloat', possible loss of data
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 4\lab 2\lab 2\viewer.cpp(471): warning C4244: '=': conversion from 'int' to 'GLfloat', possible loss of data
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 4\lab 2\lab 2\viewer.cpp(473): warning C4305: 'initializing': truncation from 'double' to 'GLfloat'
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 4\lab 2\lab 2\viewer.cpp(502): warning C4101: 'fragment': unreferenced local variable
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 4\lab 2\lab 2\viewer.cpp(503): warning C4101: 'vertex': unreferenced local variable
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 4\lab 2\lab 2\viewer.cpp(501): warning C4101: 'fragmentName': unreferenced local variable
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 4\lab 2\lab 2\viewer.cpp(500): warning C4101: 'vertexName': unreferenced local variable
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 4\lab 2\lab 2\viewer.cpp(498): warning C4101: 'user': unreferenced local variable
+  tiny_obj_loader.cc
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 4\lab 2\lab 2\tiny_obj_loader.cc(84): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 4\lab 2\lab 2\tiny_obj_loader.cc(85): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 4\lab 2\lab 2\tiny_obj_loader.cc(199): warning C4267: 'initializing': conversion from 'size_t' to 'unsigned int', possible loss of data
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 4\lab 2\lab 2\tiny_obj_loader.cc(463): warning C4244: 'initializing': conversion from '__int64' to 'int', possible loss of data
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 4\lab 2\lab 2\tiny_obj_loader.cc(609): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 4\lab 2\lab 2\tiny_obj_loader.cc(611): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+c:\program files (x86)\microsoft visual studio 14.0\vc\include\utility(172): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 4\lab 2\lab 2\tiny_obj_loader.cc(326): note: see reference to function template instantiation 'std::pair<std::string,int>::pair<std::string&,unsigned __int64,void,0>(_Other1,_Other2 &&) noexcept(false)' being compiled
+          with
+          [
+              _Other1=std::string &,
+              _Other2=unsigned __int64
+          ]
+  c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 4\lab 2\lab 2\tiny_obj_loader.cc(326): note: see reference to function template instantiation 'std::pair<std::string,int>::pair<std::string&,unsigned __int64,void,0>(_Other1,_Other2 &&) noexcept(false)' being compiled
+          with
+          [
+              _Other1=std::string &,
+              _Other2=unsigned __int64
+          ]
+  Shaders.cpp
+c:\users\100515147\desktop\advanced computer graphics\assignments\assignment 1\lab 4\lab 2\lab 2\shaders.cpp(34): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+  Generating Code...
+  Lab 2.vcxproj -> C:\Users\100515147\Desktop\Advanced Computer Graphics\Assignments\Assignment 1\Lab 4\Lab 2\x64\Debug\Lab 2.exe
+  Lab 2.vcxproj -> C:\Users\100515147\Desktop\Advanced Computer Graphics\Assignments\Assignment 1\Lab 4\Lab 2\x64\Debug\Lab 2.pdb (Full PDB)
