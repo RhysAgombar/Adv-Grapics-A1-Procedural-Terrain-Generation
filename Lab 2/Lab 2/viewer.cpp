@@ -17,7 +17,6 @@
 #include <math.h>
 #include <stdio.h>
 #include "Shaders.h"
-#include "tiny_obj_loader.h"
 #include <iostream>
 #include <random>
 #include <fstream>
@@ -374,10 +373,10 @@ void init() {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibuffer);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, i_size, inds, GL_STATIC_DRAW);
 
-	glUseProgram(program);
 	vPosition = glGetAttribLocation(program, "vPosition");
 	glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(vPosition);
+
 	vNormal = glGetAttribLocation(program, "vNormal");
 	glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, (void*)v_size);
 	glEnableVertexAttribArray(vNormal);
