@@ -26,15 +26,12 @@
     <ClInclude Include="Shaders.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="tiny_obj_loader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="lab2.fs">
+    <None Include="lab2c.fs">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="lab2.vs">
+    <None Include="lab2c.vs">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>

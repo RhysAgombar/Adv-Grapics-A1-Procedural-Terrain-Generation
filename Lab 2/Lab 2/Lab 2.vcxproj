@@ -154,11 +154,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Shaders.h" />
-    <ClInclude Include="tiny_obj_loader.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="lab2.fs" />
-    <None Include="lab2.vs" />
+    <None Include="lab2c.fs" />
+    <None Include="lab2c.vs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

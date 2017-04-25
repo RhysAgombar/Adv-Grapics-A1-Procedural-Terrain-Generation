@@ -17,11 +17,9 @@
 #include <math.h>
 #include <stdio.h>
 #include "Shaders.h"
-#include "tiny_obj_loader.h"
 #include <iostream>
+#include <random>
 #include <fstream>
-#include <math.h>
-
 
 float eyex, eyey, eyez;
 
@@ -32,19 +30,35 @@ GLuint program;
 
 glm::mat4 projection;
 
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget);
+
+glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirection));
+glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight);
+
+std::default_random_engine generator;
+std::normal_distribution<double> distribution(0.0, 1.0);
+
+GLfloat lastX = 160; // center of window
+GLfloat lastY = 160;
+GLfloat pitch = 0; // center of window
+GLfloat yaw = 0;
+
 GLuint objVAO;
 int triangles;
 
-int horiz = 5;
-int vert = 5;
+int scaleFactor = 0;
 
-GLfloat* map;
+int rows = 30;
+int cols = 30;
+int index_count = 3 * 2 * (rows - 1)*(cols - 1);
 
-int getIndNum(int width, int height) {
-	return (2 * height) * (width - 1);
-}
+float* heights;
 
-void  findNormal(GLfloat* p1, GLfloat* p2, GLfloat* p3, GLfloat(&n)[3]) {
+void findNormal(GLfloat* p1, GLfloat* p2, GLfloat* p3, GLfloat(&n)[3]) {
 	GLfloat v[3], w[3];
 
 	v[0] = p2[0] - p1[0];
@@ -55,26 +69,150 @@ void  findNormal(GLfloat* p1, GLfloat* p2, GLfloat* p3, GLfloat(&n)[3]) {
 	w[1] = p3[1] - p1[1];
 	w[2] = p3[2] - p1[2];
 
-	n[0] = (v[1] * w[2]) - (v[2] * w[1]);
-	n[1] = (v[2] * w[0]) - (v[0] * w[2]);
-	n[2] = (v[0] * w[1]) - (v[1] * w[0]);
+	n[0] = ((v[1] * w[2]) - (v[2] * w[1]));
+	n[1] = ((v[2] * w[0]) - (v[0] * w[2]));
+	n[2] = ((v[0] * w[1]) - (v[1] * w[0]));
 
-	GLfloat div = (abs(n[0]) + abs(n[1]) + abs(n[2]));
+	GLfloat div = abs(n[0]) + abs(n[1]) + abs(n[2]);
 
 	if (div != 0) {
 		n[0] = n[0] / div;
 		n[1] = n[1] / div;
 		n[2] = n[2] / div;
 	}
+
+	if (n[1] < 0) {
+		n[0] *= -1;
+		n[1] *= -1;
+		n[2] *= -1;
+	}
+
+	//std::cout << "{ " << n[0] << ", " << n[1] << ", " << n[2] << " }" << std::endl;
 }
 
-/*
-* This version of the init procedure produces the
-* data for drawing a cube.  The vertex and index
-* data are stored in constant arrays which are copied
-* into the buffers.  This code should be familiar
-* from class.
-*/
+void expandMap(GLfloat*(&map)) {
+
+	int newHoriz = (cols + (cols - 1));
+	int newVert = (rows + (rows - 1));
+	int t = 0;
+
+	GLfloat * v1 = new GLfloat[(cols + (cols - 1)) * (rows + (rows - 1)) * 4];
+
+	for (int j = 0; j < rows - 1; j++) {
+		for (int i = 0; i < cols - 1; i++) {
+			GLfloat avg[3];
+			int pos1 = (i + j*cols) * 4;
+			int pos2 = (i + 1 + j*cols) * 4;
+			int pos3 = (i + (j + 1)*cols) * 4;
+			int pos4 = (i + 1 + (j + 1)*cols) * 4;
+
+			avg[0] = (map[pos1] + map[pos2] + map[pos3] + map[pos4]) / 4;
+			avg[1] = (map[pos1 + 1] + map[pos2 + 1] + map[pos3 + 1] + map[pos4 + 1]) / 4;
+			avg[2] = (map[pos1 + 2] + map[pos2 + 2] + map[pos3 + 2] + map[pos4 + 2]) / 4;
+
+			int vPos = ((j + 1) * (2 * cols) + j*(2 * (cols - 1)) + (2 * i)) * 4;
+
+			v1[vPos] = avg[0];
+			v1[vPos + 1] = avg[1];
+			v1[vPos + 2] = avg[2];
+			v1[vPos + 3] = 1.0;
+		}
+	}
+
+	for (int j = 0; j < rows; j++) {
+		for (int i = 0; i < cols; i++) {
+			int pos = ((j) * (2 * cols) + (2 * i) + j*(2 * (cols - 1))) * 4;
+			int mPos = (i + j*cols) * 4;
+			pos = pos;
+
+			v1[pos] = map[mPos];
+			v1[pos + 1] = map[mPos + 1];
+			v1[pos + 2] = map[mPos + 2];
+			v1[pos + 3] = 1.0;
+
+		}
+	}
+
+	for (int j = 0; j < newVert; j++) {
+		for (int i = 0; i < newHoriz; i++) {
+
+			int pos = (i + j*newHoriz) * 4;
+			int count = 0;
+
+			if (v1[pos] < (-1e5)) {
+
+				v1[pos] = 0;
+				v1[pos + 1] = 0;
+				v1[pos + 2] = 0;
+				v1[pos + 3] = 1.0;
+
+				if ((i - 1) >= 0) {
+					v1[pos] += v1[pos - 4];
+					v1[pos + 1] += v1[pos - 3];
+					v1[pos + 2] += v1[pos - 2];
+					count++;
+
+					if (i + 1 < newHoriz) {
+						v1[pos] += v1[pos + 4];
+						v1[pos + 1] += v1[pos + 5];
+						v1[pos + 2] += v1[pos + 6];
+						count++;
+					}
+					else {
+						v1[pos] -= v1[pos - 4];
+						v1[pos + 1] -= v1[pos - 3];
+						v1[pos + 2] -= v1[pos - 2];
+						count--;
+					}
+				}
+
+				if (j - 1 >= 0) {
+					v1[pos] += v1[pos - newHoriz * 4];
+					v1[pos + 1] += v1[(pos - newHoriz * 4) + 1];
+					v1[pos + 2] += v1[(pos - newHoriz * 4) + 2];
+					count++;
+
+					if (j + 1 < newVert) {
+						v1[pos] += v1[pos + newHoriz * 4];
+						v1[pos + 1] += v1[pos + newHoriz * 4 + 1];
+						v1[pos + 2] += v1[pos + newHoriz * 4 + 2];
+						count++;
+					}
+					else {
+						v1[pos] -= v1[pos - newHoriz * 4];
+						v1[pos + 1] -= v1[(pos - newHoriz * 4) + 1];
+						v1[pos + 2] -= v1[(pos - newHoriz * 4) + 2];
+						count--;
+					}
+				}
+
+								
+				v1[pos] /= count;
+				v1[pos + 1] /= count;
+				v1[pos + 2] /= count;
+
+				if (v1[pos + 1] > 0.02) {
+					double r = distribution(generator);
+					v1[pos + 1] += (r * (0.01));
+				}
+				else {
+					double r = distribution(generator);
+					v1[pos + 1] += (r * (0.002));
+				}
+
+			}
+		}
+	}
+
+	cols = newHoriz;
+	rows = newVert;
+
+	index_count = 3 * 2 * (rows - 1)*(cols - 1);
+
+	map = v1;
+
+}
+
 void init() {
 	GLuint vbuffer;
 	GLuint ibuffer;
@@ -84,130 +222,163 @@ void init() {
 	glGenVertexArrays(1, &objVAO);
 	glBindVertexArray(objVAO);
 
+	GLfloat * verts = new GLfloat[4 * rows*cols];
+	GLfloat * norms = new GLfloat[3 * rows*cols];
+	GLuint * inds = new GLuint[index_count];
 
+	int vi = 0;
+	int ni = 0;
+	int ii = 0;
+	int hi = 0;
 
-	GLfloat vertices[25][4];
-	GLfloat test[25][4];
-
-	int nv = horiz * vert;
-
-	//vertices = new GLfloat*[nv];
-
-	//for (int i = 0; i < nv; i++) {
-	//	vertices[i] = new GLfloat[4];
-	//}
-
-	for (int i = 0; i < vert * horiz; i++) {
-		vertices[i][0] = i % horiz; // count from 0 to horiz size for x value
-		vertices[i][1] = (int)(i / 5); // Only increase y value when we change to a new line
-		vertices[i][2] = map[i]; // z value = map value
-		vertices[i][3] = 1.0;
-	}
-
-
-	GLfloat * verticesd = new GLfloat[25 * 4];
-	for (int i = 0; i < 25; ++i)
+	for (int i = 0; i < rows; ++i)
 	{
-		for (int j = 0; j < 4; ++j)
+		for (int j = 0; j < cols; ++j)
 		{
-			verticesd[i * 4 + j] = vertices[i][j];
-		}
-
-		std::cout << verticesd[i * 4 + 0] << ", " << verticesd[i * 4 + 1] << ", " << verticesd[i * 4 + 2] << std::endl;
-	}
-
-
-	GLfloat fnormals[38][3]; // face normal for every face (38 faces)
-	GLfloat normals[25][3]; // number of vertices (25 vertices)
-
-	GLuint indexes[40] = { 0, 1, 5, 6, 10, 11, 15, 16, 20};
-
-	int i = 0;
-
-	for (int row = 0; row < vert - 1; row++) {
-		if ((row & 1) == 0) { // even rows
-			for (int col = 0; col<vert; col++) { // modified version of the formula from one of the examples you gave me.
-				indexes[i++] = row + col * vert; // It seems to work correctly.
-				indexes[i++] = (row + 1) + col * vert;
-			}
-		}
-		else { // odd rows
-			for (int col = horiz - 1; col >= 0; col--) {
-				indexes[i++] = (row)+col * horiz;
-				indexes[i++] = (row + 1) + col * horiz;
+			verts[vi++] = i;
+			verts[vi++] = heights[hi++];
+			verts[vi++] = j;
+			verts[vi++] = 1.0;
+			if (((j + 1) < cols) && ((i + 1) < rows))
+			{
+				inds[ii++] = cols * (i + 1) + j + 1;
+				inds[ii++] = cols * (i + 1) + j;
+				inds[ii++] = cols * i + j;
+				inds[ii++] = cols * (i + 1) + j + 1;
+				inds[ii++] = cols * i + j;
+				inds[ii++] = cols * i + j + 1;
 			}
 		}
 	}
 
 
-	GLfloat arrHolder[3];
-	GLfloat test1, test2, test3;
-
-	bool toggle = false;
-
-	for (int i = 0; i < 38; i++) { // for every index...
-
-		if (toggle == false) {
-			findNormal(vertices[indexes[i]], vertices[indexes[i + 1]], vertices[indexes[i + 2]], arrHolder); // find the normal of the face
-			toggle = true;
-		}
-		else {
-			findNormal(vertices[indexes[i]], vertices[indexes[i + 2]], vertices[indexes[i + 1]], arrHolder); // alternate the direction of the normal to 
-			toggle = false;																					 // compensate for the direction change in the indices formula
-		}
-
-
-		fnormals[i][0] = arrHolder[0];
-		fnormals[i][1] = arrHolder[1];
-		fnormals[i][2] = arrHolder[2];
+	for (int i = 0; i < scaleFactor; i++) {
+		expandMap(verts);
 	}
 
-	int count;
-	for (int i = 0; i < 25; i++) { // for every vertex...
-		count = 0;
+	ii = 0;
+	ni = 0;
+	vi = 0;
 
-		normals[i][0] = 0;
-		normals[i][1] = 0; // set vertex normals to 0
-		normals[i][2] = 0;
+	for (int i = 0; i < rows; i++) {
+		for (int j = 0; j < cols; j++) {
+			verts[vi] = verts[vi++];
+			verts[vi] = verts[vi++];
+			verts[vi] = verts[vi++];
+		}
+	}
 
-		for (int j = 0; j < 38; j++) { // for every face...
-			if (indexes[j] == i || indexes[j + 1] == i || indexes[j + 2] == i) {  // if the face contains the vertex
-				count++; // increment the count
-				normals[i][0] += fnormals[j][0]; // add the face normal to the vertex normal 
-				normals[i][1] += fnormals[j][1];
-				normals[i][2] += fnormals[j][2];
+	inds = new GLuint[index_count];
+
+	for (int i = 0; i < rows; ++i)
+	{
+		for (int j = 0; j < cols; ++j)
+		{
+			if (((j + 1) < cols) && ((i + 1) < rows))
+			{
+				inds[ii++] = cols * (i + 1) + j + 1;
+				inds[ii++] = cols * (i + 1) + j;
+				inds[ii++] = cols * i + j;
+				inds[ii++] = cols * (i + 1) + j + 1;
+				inds[ii++] = cols * i + j;
+				inds[ii++] = cols * i + j + 1;
 			}
 		}
-
-		normals[i][0] /= count; // divide the normal by the count to average
-		normals[i][1] /= count;
-		normals[i][2] /= count;
 	}
 
-	//normals[1][0] = 1;
-	//normals[1][1] = 1;  // used for debugging to figure out what normals were mapped to where in the image
-	//normals[1][2] = 1;
+	norms = new GLfloat[3 * rows*cols];
 
-	triangles = 38;
+	for (int i = 0; i < 3 * rows*cols; i++) {
+		norms[i] = 0;
+	}
 
-	int verticesd_size = 4 * 8 * sizeof(*verticesd);
+	ii = 0;
+	ni = 0;
+
+	GLfloat hold[3];
+	GLfloat * fnorms = new GLfloat[3 * rows * cols * 2];
+
+	vi = 0;
+	ii = 0;
+
+	for (int i = 0; i < (rows-1) * (cols-1) * 2; i++)
+	{
+		// I don't know why, but everything is backwards, so I had to load the stuff in backwards to set it right
+		GLfloat p1[3] = { verts[(inds[ii] * 4) + 2] , verts[(inds[ii] * 4) + 1] , verts[(inds[ii] * 4)] };
+		ii++;
+		GLfloat p2[3] = { verts[(inds[ii] * 4) + 2] , verts[(inds[ii] * 4) + 1] , verts[(inds[ii] * 4)] };
+		ii++;
+		GLfloat p3[3] = { verts[(inds[ii] * 4) + 2] , verts[(inds[ii] * 4) + 1] , verts[(inds[ii] * 4)] };
+		ii++;
+
+		findNormal(p1,p2,p3,hold);
+
+		fnorms[ni++] = hold[0];
+		fnorms[ni++] = hold[1];
+		fnorms[ni++] = hold[2];
+
+	}
+
+	ii = 0;
+	
+	int* count = new int[rows * cols];
+
+	for (int i = 0; i < rows*cols; i++) {
+		count[i] = 0;
+	}
+
+	ii = 0;
+
+	for (int i = 0; i < ni; i = i + 3) {
+		
+		norms[(inds[ii] * 3)] += fnorms[i];
+		norms[(inds[ii] * 3) + 1] += fnorms[i + 1];
+		norms[(inds[ii] * 3) + 2] += fnorms[i + 2];
+		count[(inds[ii++])]++;
+
+		norms[(inds[ii] * 3)] += fnorms[i];
+		norms[(inds[ii] * 3) + 1] += fnorms[i + 1];
+		norms[(inds[ii] * 3) + 2] += fnorms[i + 2];
+		count[(inds[ii++])]++;
+
+		norms[(inds[ii] * 3)] += fnorms[i];
+		norms[(inds[ii] * 3) + 1] += fnorms[i + 1];
+		norms[(inds[ii] * 3) + 2] += fnorms[i + 2];
+		count[(inds[ii])]++;
+		ii++;
+	}
+
+	ni = 0;
+
+	for (int i = 0; i < rows*cols; i++) {
+		norms[ni] /= (count[i] );
+		ni++;
+		norms[ni] /= (count[i]);
+		ni++;
+		norms[ni] /= (count[i]);
+		ni++;
+	}
+
+	int v_size = rows * cols * 4 * sizeof(*verts);
+	int n_size = rows * cols * 3 * sizeof(*norms);
+	int i_size = index_count * sizeof(*inds);
 
 	glGenBuffers(1, &vbuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, vbuffer);
-	glBufferData(GL_ARRAY_BUFFER, verticesd_size + sizeof(normals), NULL, GL_STATIC_DRAW);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, verticesd_size, verticesd);
-	glBufferSubData(GL_ARRAY_BUFFER, verticesd_size, sizeof(normals), normals);
+	glBufferData(GL_ARRAY_BUFFER, v_size + n_size, NULL, GL_STATIC_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, v_size, verts);
+	glBufferSubData(GL_ARRAY_BUFFER, v_size, n_size, norms);
 
 	glGenBuffers(1, &ibuffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibuffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indexes), indexes, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, i_size, inds, GL_STATIC_DRAW);
 
-	glUseProgram(program);
 	vPosition = glGetAttribLocation(program, "vPosition");
 	glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(vPosition);
+
 	vNormal = glGetAttribLocation(program, "vNormal");
-	glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, (void*)(verticesd));
+	glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, (void*)v_size);
 	glEnableVertexAttribArray(vNormal);
 
 }
@@ -233,16 +404,14 @@ void displayFunc(void) {
 	int viewLoc;
 	int projLoc;
 	int colourLoc;
-	int eyeLoc;
+	int camLoc;
 	int lightLoc;
 	int materialLoc;
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(program);
 
-	view = glm::lookAt(glm::vec3(eyex, eyey, eyez),
-		glm::vec3(0.0f, 0.0f, 0.0f),
-		glm::vec3(0.0f, 0.0f, 1.0f));
+	view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
 	viewLoc = glGetUniformLocation(program, "modelView");
 	glUniformMatrix4fv(viewLoc, 1, 0, glm::value_ptr(view));
@@ -250,42 +419,75 @@ void displayFunc(void) {
 	glUniformMatrix4fv(projLoc, 1, 0, glm::value_ptr(projection));
 
 	colourLoc = glGetUniformLocation(program, "colour");
-	glUniform4f(colourLoc, 1.0, 0.0, 0.0, 1.0);
-	eyeLoc = glGetUniformLocation(program, "Eye");
-	glUniform3f(eyeLoc, eyex, eyey, eyez);
+	glUniform4f(colourLoc, 0.000, 0.000, 0.804, 1.0);
+	camLoc = glGetUniformLocation(program, "Eye");
+	glUniform3f(camLoc, cameraPos.x, 0.0f, cameraPos.z);
 	lightLoc = glGetUniformLocation(program, "light");
 	glUniform3f(lightLoc, 1.0, 1.0, 1.0);
 	materialLoc = glGetUniformLocation(program, "material");
 	glUniform4f(materialLoc, 0.3, 0.7, 0.7, 150.0);
 
 	glBindVertexArray(objVAO);
-	glDrawElements(GL_TRIANGLE_STRIP, 3 * triangles, GL_UNSIGNED_INT, NULL);
+	glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_INT, NULL);
 
 	glutSwapBuffers();
 }
 
 void keyboardFunc(unsigned char key, int x, int y) {
 
+	GLfloat cameraSpeed = 0.15f;
+
 	switch (key) {
 	case 'a':
-		phi -= 0.1;
+		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
 		break;
 	case 'd':
-		phi += 0.1;
+		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
 		break;
 	case 'w':
-		theta += 0.1;
+		cameraPos += cameraSpeed * cameraFront;
 		break;
 	case 's':
-		theta -= 0.1;
+		cameraPos -= cameraSpeed * cameraFront;
 		break;
 	}
 
-	eyex = r*sin(theta)*cos(phi);
-	eyey = r*sin(theta)*sin(phi);
-	eyez = r*cos(theta);
-
 	glutPostRedisplay();
+
+}
+
+void mouseFunc(int button, int state, int x, int y) {
+
+	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+		lastX = x;
+		lastY = y;
+	}
+	else if (button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
+
+		GLfloat xoffset = x - lastX;
+		GLfloat yoffset = lastY - y;
+		lastX = x;
+		lastY = y;
+
+		GLfloat sensitivity = 0.15;
+		xoffset *= sensitivity;
+		yoffset *= sensitivity;
+
+		yaw += xoffset;
+		pitch += yoffset;
+
+		if (pitch > 89.0f)
+			pitch = 89.0f;
+		if (pitch < -89.0f)
+			pitch = -89.0f;
+
+		glm::vec3 front;
+		front.x = -sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+		front.y = -sin(glm::radians(pitch));
+		front.z = -cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+		cameraFront = glm::normalize(front);
+	}
+
 
 }
 
@@ -294,17 +496,10 @@ int main(int argc, char **argv) {
 	int vs;
 	int user;
 
-	std::string in;
-	std::fstream file("heightmap.txt");
-
-	map = new GLfloat[25];//[horiz*vert];
-
-	for (int i = 0; i < horiz * vert; i++) {
-		file >> map[i];
-	}
-
-	file.close();
-
+	char vertexName[256];
+	char fragmentName[256];
+	char *fragment;
+	char *vertex;
 
 	glutInit(&argc, argv);
 
@@ -321,23 +516,34 @@ int main(int argc, char **argv) {
 	glutDisplayFunc(displayFunc);
 	glutReshapeFunc(changeSize);
 	glutKeyboardFunc(keyboardFunc);
+	glutMouseFunc(mouseFunc);
 
 	glEnable(GL_DEPTH_TEST);
+
 	glClearColor(1.0, 1.0, 1.0, 1.0);
 
-	vs = buildShader(GL_VERTEX_SHADER, "lab2.vs");
-	fs = buildShader(GL_FRAGMENT_SHADER, "lab2.fs");
+	std::string in;
+	std::fstream file("heightmap.txt");
+
+	heights = new GLfloat[cols*rows];
+
+	file >> rows;
+	cols = rows;
+
+	file >> scaleFactor;
+
+	for (int i = 0; i < cols * rows; i++) {
+		file >> heights[i];
+	}
+
+	file.close();
+
+
+	vs = buildShader(GL_VERTEX_SHADER, "lab2c.vs");
+	fs = buildShader(GL_FRAGMENT_SHADER, "lab2c.fs");
 	program = buildProgram(vs, fs, 0);
 	dumpProgram(program, "Lab 2 shader program");
 	init();
-
-	eyex = 0.0;
-	eyez = 5.0;
-	eyey = 0.0;
-
-	theta = 1.5;
-	phi = 1.5;
-	r = 10.0;
 
 	glutMainLoop();
 
